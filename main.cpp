@@ -1,12 +1,12 @@
 #include <Novice.h>
-#define _USE_MATH_DEFINES
 #include "MyMath.h"
-#include <imgui.h>
+#include "MyDraw.h"
+#include "ImGuiManager.h"
+
+const char kWindowTitle[] = "LE2C_06_オオクボ_タク";
 
 const int kWindowWidth = 1280;
 const int kWindowHeight = 720;
-
-const char kWindowTitle[] = "LE2C_06_オオクボ_タク";
 
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
@@ -14,25 +14,29 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	// ライブラリの初期化
 	Novice::Initialize(kWindowTitle, 1280, 720);
 
+	//カメラ関係
 	Vector3 cameraTranslate{ 0.0f, 1.9f, -6.49f };
 	Vector3 cameraRotate{ 0.26f, 0.0f, 0.0f };
 
-	Segment segment{
+	Segment segment
+	{
 		{0.0f, 0.0f, 0.0f},
 		{1.0f, 1.0f, 1.0f}
 	};
 
-	Plane plane{
-		{1.0f, 1.0f, 1.0f},
-		1.0f
-	};
+	//平面
+	Triangle triangle;
+	triangle.vertices[0] = { 0.0f, 1.0f, 0.0f };
+	triangle.vertices[1] = { 1.0f, 0.0f, 0.0f };
+	triangle.vertices[2] = { -1.0f, 0.0f, 0.0f };
 
+	//色
 	uint32_t colorS1 = WHITE;
 	uint32_t colorS2 = WHITE;
 
 	// キー入力結果を受け取る箱
-	char keys[256] = {0};
-	char preKeys[256] = {0};
+	char keys[256] = { 0 };
+	char preKeys[256] = { 0 };
 
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
@@ -46,7 +50,33 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		/// ↓更新処理ここから
 		///
-		
+
+		if (keys[DIK_W])
+		{
+			cameraTranslate.z += 0.1f;
+		}
+		if (keys[DIK_S])
+		{
+			cameraTranslate.z -= 0.1f;
+		}
+		if (keys[DIK_A])
+		{
+			cameraTranslate.x -= 0.1f;
+		}
+		if (keys[DIK_D])
+		{
+			cameraTranslate.x += 0.1f;
+		}
+		if (keys[DIK_Q])
+		{
+			cameraRotate.y += 0.1f;
+		}
+		if (keys[DIK_E])
+		{
+			cameraRotate.y -= 0.1f;
+		}
+
+		//変換
 		Matrix4x4 worldMatrix = MyMath::MakeAffineMatrix({ 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f });
 		Matrix4x4 cameraMatrix = MyMath::MakeAffineMatrix({ 1.0f, 1.0f, 1.0f }, cameraRotate, cameraTranslate);
 		Matrix4x4 viewMatrix = MyMath::Inverse(cameraMatrix);
@@ -54,15 +84,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		Matrix4x4 worldViewProjectionMatrix = MyMath::Multiply(worldMatrix, MyMath::Multiply(viewMatrix, projectionMatrix));
 		Matrix4x4 viewportMatrix = MyMath::MakeViewPortMatrix(0, 0, float(kWindowWidth), float(kWindowHeight), 0.0f, 1.0f);
 
-		if (MyMath::IsCollision(segment, plane)) {
+		//当たり判定
+		if (MyMath::IsCollision(triangle, segment)) {
 			colorS1 = RED;
 		}
 		else {
 			colorS1 = WHITE;
 		}
-
-		MyMath::DrawLine(segment, worldViewProjectionMatrix, viewportMatrix, colorS1);
-		MyMath::DrawPlane(plane, worldViewProjectionMatrix, viewportMatrix, colorS2);
 
 		///
 		/// ↑更新処理ここまで
@@ -72,11 +100,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓描画処理ここから
 		///
 
-		MyMath::DrawGrid(worldViewProjectionMatrix, viewportMatrix);
+		//描画
+		MyDraw::DrawLine(segment, worldViewProjectionMatrix, viewportMatrix, colorS1);
+		MyDraw::DrawTriangle(triangle, worldViewProjectionMatrix, viewportMatrix, colorS2);
+		MyDraw::DrawGrid(worldViewProjectionMatrix, viewportMatrix);
 
 		ImGui::Begin("Debug");
-
-		if (ImGui::CollapsingHeader("Camera")) {
+		if (ImGui::CollapsingHeader("camera")) {
 			ImGui::DragFloat3("cameraTRa", &cameraTranslate.x, 0.1f, -50.0f, 50.0f);
 			ImGui::DragFloat3("cameraRot", &cameraRotate.x, 0.1f, -50.0f, 50.0f);
 		}
@@ -88,10 +118,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		}
 		ImGui::Separator();
 
-		if (ImGui::CollapsingHeader("plane")) {
-			ImGui::DragFloat("planeDistance", &plane.distance, 0.1f, -1.0f, 5.0f);
-			ImGui::DragFloat3("planeNormal", &plane.normal.x, 0.1f, -1.0f, 1.0f);
-			plane.normal = MyMath::Normalize(plane.normal);
+		if (ImGui::CollapsingHeader("triangle")) {
+			ImGui::DragFloat3("triangle0", &triangle.vertices[0].x, 0.1f, -1.0f, 5.0f);
+			ImGui::DragFloat3("triangle1", &triangle.vertices[1].x, 0.1f, -1.0f, 5.0f);
+			ImGui::DragFloat3("triangle2", &triangle.vertices[2].x, 0.1f, -1.0f, 5.0f);
 		}
 		ImGui::Separator();
 
