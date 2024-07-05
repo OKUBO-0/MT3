@@ -4,12 +4,9 @@
 class MyMath
 {
 public:
-
 	static float Dot(const Vector3& v1, const Vector3& v2);
 
 	static float Length(const Vector3& v);
-
-	static float Clamp(float num, float max, float min);
 
 	static Vector3 Add(const Vector3& v1, const Vector3& v2);
 
@@ -66,4 +63,8 @@ public:
 	static bool IsCollision(const Line& line, const Plane& plane);
 
 	static bool IsCollision(const Triangle& triangle, const Segment& segment);
+
+	static bool IsCollision(const AABB& aabb1, const AABB& aabb2);
+
+	static bool IsCollision(const AABB& aabb, const Sphere& sphere);
 };

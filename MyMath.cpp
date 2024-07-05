@@ -1,6 +1,7 @@
 #include "MyMath.h"
 #include <cmath>
 #include <assert.h>
+#include <algorithm>
 
 
 float MyMath::Dot(const Vector3& v1, const Vector3& v2) {
@@ -17,17 +18,17 @@ float MyMath::Length(const Vector3& v) {
 	return result;
 }
 
-float MyMath::Clamp(float num, float max, float min) {
-	if (num > max) {
-		return max;
-	}
-	else if (num < min) {
-		return min;
-	}
-	else {
-		return num;
-	}
-}
+//float MyMath::Clamp(float num, float max, float min) {
+//	if (num > max) {
+//		return max;
+//	}
+//	else if (num < min) {
+//		return min;
+//	}
+//	else {
+//		return num;
+//	}
+//}
 
 
 Vector3 MyMath::Add(const Vector3& v1, const Vector3& v2) {
@@ -92,7 +93,7 @@ Vector3 MyMath::ClosestPoint(const Vector3& point, const Segment& segment) {
 	float t = Dot(Subtract(point, segment.origin), segment.diff) / std::powf(Length(segment.diff), 2.0f);
 	Vector3 result = Add(segment.origin, Multiply(t, segment.diff));
 
-	t = Clamp(t, 1.0f, 0.0f);
+	//t = Clamp(t, 1.0f, 0.0f);
 
 
 	return result;
@@ -126,26 +127,6 @@ Matrix4x4 MyMath::Multiply(const Matrix4x4& m1, const Matrix4x4& m2) {
 
 		}
 	}
-
-	/*result.m[0][0] = m1.m[0][0] * m2.m[0][0] + m1.m[0][1] * m2.m[1][0] + m1.m[0][2] * m2.m[2][0] + m1.m[0][3] * m2.m[3][0];
-	result.m[0][1] = m1.m[0][0] * m2.m[0][1] + m1.m[0][1] * m2.m[1][1] + m1.m[0][2] * m2.m[2][1] + m1.m[0][3] * m2.m[3][1];
-	result.m[0][2] = m1.m[0][0] * m2.m[0][2] + m1.m[0][1] * m2.m[1][2] + m1.m[0][2] * m2.m[2][2] + m1.m[0][3] * m2.m[3][2];
-	result.m[0][3] = m1.m[0][0] * m2.m[0][3] + m1.m[0][1] * m2.m[1][3] + m1.m[0][2] * m2.m[2][3] + m1.m[0][3] * m2.m[3][3];
-
-	result.m[1][0] = m1.m[1][0] * m2.m[0][0] + m1.m[1][1] * m2.m[1][0] + m1.m[1][2] * m2.m[2][0] + m1.m[1][3] * m2.m[3][0];
-	result.m[1][1] = m1.m[1][0] * m2.m[0][1] + m1.m[1][1] * m2.m[1][1] + m1.m[1][2] * m2.m[2][1] + m1.m[1][3] * m2.m[3][1];
-	result.m[1][2] = m1.m[1][0] * m2.m[0][2] + m1.m[1][1] * m2.m[1][2] + m1.m[1][2] * m2.m[2][2] + m1.m[1][3] * m2.m[3][2];
-	result.m[1][3] = m1.m[1][0] * m2.m[0][3] + m1.m[1][1] * m2.m[1][3] + m1.m[1][2] * m2.m[2][3] + m1.m[1][3] * m2.m[3][3];
-
-	result.m[2][0] = m1.m[2][0] * m2.m[0][0] + m1.m[2][1] * m2.m[1][0] + m1.m[2][2] * m2.m[2][0] + m1.m[2][3] * m2.m[3][0];
-	result.m[2][1] = m1.m[2][0] * m2.m[0][1] + m1.m[2][1] * m2.m[1][1] + m1.m[2][2] * m2.m[2][1] + m1.m[2][3] * m2.m[3][1];
-	result.m[2][2] = m1.m[2][0] * m2.m[0][2] + m1.m[2][1] * m2.m[1][2] + m1.m[2][2] * m2.m[2][2] + m1.m[2][3] * m2.m[3][2];
-	result.m[2][3] = m1.m[2][0] * m2.m[0][3] + m1.m[2][1] * m2.m[1][3] + m1.m[2][2] * m2.m[2][3] + m1.m[2][3] * m2.m[3][3];
-
-	result.m[3][0] = m1.m[3][0] * m2.m[0][0] + m1.m[3][1] * m2.m[1][0] + m1.m[3][2] * m2.m[2][0] + m1.m[3][3] * m2.m[3][0];
-	result.m[3][1] = m1.m[3][0] * m2.m[0][1] + m1.m[3][1] * m2.m[1][1] + m1.m[3][2] * m2.m[2][1] + m1.m[3][3] * m2.m[3][1];
-	result.m[3][2] = m1.m[3][0] * m2.m[0][2] + m1.m[3][1] * m2.m[1][2] + m1.m[3][2] * m2.m[2][2] + m1.m[3][3] * m2.m[3][2];
-	result.m[3][3] = m1.m[3][0] * m2.m[0][3] + m1.m[3][1] * m2.m[1][3] + m1.m[3][2] * m2.m[2][3] + m1.m[3][3] * m2.m[3][3];*/
 	return result;
 }
 
@@ -542,17 +523,6 @@ Matrix4x4 MyMath::Transpose(const Matrix4x4& m) {
 		}
 	}
 
-	//result.m[0][0] = m.m[0][0];
-	//result.m[0][1] = m.m[1][0];
-	//result.m[0][2] = m.m[2][0];
-	//result.m[0][3] = m.m[3][0];
-
-	//result.m[1][0] = m.m[0][1];
-	//result.m[1][1] = m.m[1][1];
-	//result.m[1][2] = m.m[2][1];
-	//result.m[1][3] = m.m[3][1];
-
-
 	return result;
 }
 
@@ -682,6 +652,38 @@ bool MyMath::IsCollision(const Triangle& triangle, const Segment& segment) {
 			return true;
 		}
 
+	}
+
+
+
+	return false;
+
+}
+
+bool MyMath::IsCollision(const AABB& aabb1, const AABB& aabb2) {
+	if ((aabb1.min.x <= aabb2.max.x && aabb1.max.x >= aabb2.min.x) &&
+		(aabb1.min.y <= aabb2.max.y && aabb1.max.y >= aabb2.min.y) &&
+		(aabb1.min.z <= aabb2.max.z && aabb1.max.z >= aabb2.min.z)
+		) {
+
+		return true;
+
+	}
+
+	return false;
+
+}
+
+bool MyMath::IsCollision(const AABB& aabb, const Sphere& sphere) {
+	Vector3 clossestPoint{
+		std::clamp(sphere.center.x, aabb.min.x, aabb.max.x),
+		std::clamp(sphere.center.y, aabb.min.y, aabb.max.y),
+		std::clamp(sphere.center.z, aabb.min.z, aabb.max.z)
+	};
+
+	float distance = Length(Subtract(clossestPoint, sphere.center));
+	if (distance <= sphere.radius) {
+		return true;
 	}
 
 	return false;
