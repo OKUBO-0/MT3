@@ -4,15 +4,16 @@
 #include "ImGuiManager.h"
 
 const char kWindowTitle[] = "LE2C_06_オオクボ_タク";
-
+//画面のサイズ
 const int kWindowWidth = 1280;
 const int kWindowHeight = 720;
+
 
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	// ライブラリの初期化
-	Novice::Initialize(kWindowTitle, 1280, 720);
+	Novice::Initialize(kWindowTitle, kWindowWidth, kWindowHeight);
 
 	//カメラ関係
 	Vector3 cameraTranslate{ 0.0f, 1.9f, -6.49f };
@@ -23,14 +24,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		.min{-0.5f, -0.5f, -0.5f},
 		.max{ 0.0f, 0.0f, 0.0f}
 	};
-	AABB aabb2{
-		.min{0.2f, 0.2f, 0.2f},
-		.max{ 1.0f, 1.0f, 1.0f}
+	Sphere sphere{
+		{1.0f, 1.0f, 1.0f},
+		0.1f
 	};
+
 
 	//色
 	uint32_t colorS1 = WHITE;
 	uint32_t colorS2 = WHITE;
+
 
 	Matrix4x4 worldMatrix = MyMath::MakeAffineMatrix({ 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f });
 	Matrix4x4 cameraMatrix = MyMath::MakeAffineMatrix({ 1.0f, 1.0f, 1.0f }, cameraRotate, cameraTranslate);
@@ -77,6 +80,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		if (keys[DIK_LEFTARROW]) {
 			cameraRotate.y -= 0.1f;
 		}
+		//Vector3 cameraDir = MyMath::Normalize(cameraRotate);
+		/*move.x = move.x * cameraDir.x;
+		move.y = move.y * cameraDir.y;
+		move.z = move.z * cameraDir.z;*/
 
 		cameraTranslate = MyMath::TransformCoord(move, trans);
 		//諸々の変換
@@ -88,42 +95,43 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		viewportMatrix = MyMath::MakeViewPortMatrix(0, 0, float(kWindowWidth), float(kWindowHeight), 0.0f, 1.0f);
 
 		//当たり判定
-		if (MyMath::IsCollision(aabb1, aabb2)) {
+		if (MyMath::IsCollision(aabb1, sphere)) {
 			colorS1 = RED;
 		}
 		else {
 			colorS1 = WHITE;
 		}
 
+
+
 		///
 		/// ↑更新処理ここまで
 		///
+
+
 
 		///
 		/// ↓描画処理ここから
 		///
 
-		
 		MyDraw::DrawGrid(worldViewProjectionMatrix, viewportMatrix);
+
+		//各描画
 		MyDraw::DrawAABB(aabb1, worldViewProjectionMatrix, viewportMatrix, colorS1);
-		MyDraw::DrawAABB(aabb2, worldViewProjectionMatrix, viewportMatrix, colorS2);
+		MyDraw::DrawShere(sphere, worldViewProjectionMatrix, viewportMatrix, colorS2);
 
+
+
+		//デバッグ
 		ImGui::Begin("Debug");
+		ImGui::DragFloat3("cameraTRa", &cameraTranslate.x, 0.1f, -50.0f, 50.0f);
+		ImGui::DragFloat3("cameraRot", &cameraRotate.x, 0.1f, -50.0f, 50.0f);
 
-		if (ImGui::CollapsingHeader("camera")) {
-			ImGui::DragFloat3("cameraTRa", &cameraTranslate.x, 0.1f, -50.0f, 50.0f);
-			ImGui::DragFloat3("cameraRot", &cameraRotate.x, 0.1f, -50.0f, 50.0f);
-		}
-		ImGui::Separator();
+		ImGui::DragFloat3("AABB1min", &aabb1.min.x, 0.1f, -1.0f, 5.0f);
+		ImGui::DragFloat3("AABB1max", &aabb1.max.x, 0.1f, -1.0f, 5.0f);
 
-		if (ImGui::CollapsingHeader("AABB")) {
-			ImGui::DragFloat3("AABB1min", &aabb1.min.x, 0.1f, -1.0f, 5.0f);
-			ImGui::DragFloat3("AABB1max", &aabb1.max.x, 0.1f, -1.0f, 5.0f);
-			ImGui::DragFloat3("AABB2min", &aabb2.min.x, 0.1f, -1.0f, 5.0f);
-			ImGui::DragFloat3("AABB2max", &aabb2.max.x, 0.1f, -1.0f, 5.0f);
-		}
-		ImGui::Separator();
-
+		ImGui::DragFloat3("sphereC", &sphere.center.x, 0.1f, -1.0f, 5.0f);
+		ImGui::DragFloat("sphereR", &sphere.radius, 0.1f, -1.0f, 5.0f);
 		ImGui::End();
 
 		///

@@ -1,53 +1,53 @@
-#pragma once
+﻿#pragma once
 
-struct Vector3 final
-{
-	float x;
-	float y;
-	float z;
+//３次元ベクトル
+struct Vector3 final {
+	float x;	//!< x
+	float y;	//!< y
+	float z;	//!< z
 };
 
-struct Matrix4x4 final
-{
-	float m[4][4];
+//4x4行列
+struct Matrix4x4 final {
+	float m[4][4];	//!< 4x4の配列
 };
 
-struct Sphere final
-{
-	Vector3 center;
-	float radius;
+//球
+struct Sphere final {
+	Vector3 center;//!< 中心点
+	float radius;//!< 半径
 };
 
-struct Line final
-{
-	Vector3 origin;
-	Vector3 diff;
+//直線
+struct Line final {
+	Vector3 origin;	//!< 始点
+	Vector3 diff;	//!< 終点への差分ベクトル
 };
 
-struct Ray final
-{
-	Vector3 origin;
-	Vector3 diff;
+//半直線
+struct Ray final {
+	Vector3 origin;	//!< 始点
+	Vector3 diff;	//!< 終点への差分ベクトル
 };
 
-struct Segment final
-{
-	Vector3 origin;
-	Vector3 diff;
+//線分
+struct Segment final {
+	Vector3 origin;	//!< 始点
+	Vector3 diff;	//!< 終点への差分ベクトル
 };
 
-struct Plane final
-{
-	Vector3 normal;
-	float distance;
+//平面
+struct Plane final {
+	Vector3 normal;	//!< 法線
+	float distance;	//!< 距離
 };
 
-struct Triangle
-{
-	Vector3 vertices[3];
+struct Triangle {
+	Vector3 vertices[3]; //!< 頂点(3個)
 };
 
 struct AABB {
-	Vector3 min;
-	Vector3 max;
+	Vector3 min;	//!< 最少点
+	Vector3 max;	//!< 最大点
+
 };

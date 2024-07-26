@@ -3,21 +3,18 @@
 #include <assert.h>
 #include <algorithm>
 
-
 float MyMath::Dot(const Vector3& v1, const Vector3& v2) {
 	float result;
 	result = v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
 
 	return result;
 }
-
 float MyMath::Length(const Vector3& v) {
 	float result;
 	result = sqrtf(v.x * v.x + v.y * v.y + v.z * v.z);
 
 	return result;
 }
-
 //float MyMath::Clamp(float num, float max, float min) {
 //	if (num > max) {
 //		return max;
@@ -31,6 +28,7 @@ float MyMath::Length(const Vector3& v) {
 //}
 
 
+
 Vector3 MyMath::Add(const Vector3& v1, const Vector3& v2) {
 	Vector3 result{};
 	result.x = v1.x + v2.x;
@@ -38,7 +36,6 @@ Vector3 MyMath::Add(const Vector3& v1, const Vector3& v2) {
 	result.z = v1.z + v2.z;
 	return result;
 }
-
 Vector3 MyMath::Cross(const Vector3& v1, const Vector3& v2) {
 	Vector3 result{};
 	result.x = v1.y * v2.z - v1.z * v2.y;
@@ -47,7 +44,6 @@ Vector3 MyMath::Cross(const Vector3& v1, const Vector3& v2) {
 
 	return result;
 }
-
 Vector3 MyMath::Subtract(const Vector3& v1, const Vector3& v2) {
 	Vector3 result{};
 	result.x = v1.x - v2.x;
@@ -55,7 +51,6 @@ Vector3 MyMath::Subtract(const Vector3& v1, const Vector3& v2) {
 	result.z = v1.z - v2.z;
 	return result;
 }
-
 Vector3 MyMath::Multiply(const float& v1, const Vector3& v2) {
 	Vector3 result{};
 	result.x = v1 * v2.x;
@@ -63,7 +58,6 @@ Vector3 MyMath::Multiply(const float& v1, const Vector3& v2) {
 	result.z = v1 * v2.z;
 	return result;
 }
-
 Vector3 MyMath::TransformCoord(Vector3 vector, Matrix4x4 matrix) {
 	Vector3 result{};
 	result.x = vector.x * matrix.m[0][0] + vector.y * matrix.m[1][0] + vector.z * matrix.m[2][0] + 1.0f * matrix.m[3][0];
@@ -77,7 +71,6 @@ Vector3 MyMath::TransformCoord(Vector3 vector, Matrix4x4 matrix) {
 	result.z /= w;
 	return result;
 }
-
 Vector3 MyMath::Project(const Vector3& v1, const Vector3& v2) {
 	Vector3 result{};
 
@@ -88,17 +81,15 @@ Vector3 MyMath::Project(const Vector3& v1, const Vector3& v2) {
 
 	return result;
 }
-
 Vector3 MyMath::ClosestPoint(const Vector3& point, const Segment& segment) {
 	float t = Dot(Subtract(point, segment.origin), segment.diff) / std::powf(Length(segment.diff), 2.0f);
 	Vector3 result = Add(segment.origin, Multiply(t, segment.diff));
 
-	//t = Clamp(t, 1.0f, 0.0f);
+	t = std::clamp(t, 1.0f, 0.0f);
 
 
 	return result;
 }
-
 Vector3 MyMath::Normalize(const Vector3& v) {
 	Vector3 result{};
 	result.x = v.x / Length(v);
@@ -109,13 +100,13 @@ Vector3 MyMath::Normalize(const Vector3& v) {
 
 	return result;
 }
-
 Vector3 MyMath::Perpendicular(const Vector3& vector) {
 	if (vector.x != 0.0f || vector.y != 0.0f) {
 		return { -vector.y, vector.x, 0.0f };
 	}
 	return { 0.0f, -vector.z, vector.y };
 }
+
 
 
 Matrix4x4 MyMath::Multiply(const Matrix4x4& m1, const Matrix4x4& m2) {
@@ -127,9 +118,25 @@ Matrix4x4 MyMath::Multiply(const Matrix4x4& m1, const Matrix4x4& m2) {
 
 		}
 	}
+
+	/*result.m[0][0] = m1.m[0][0] * m2.m[0][0] + m1.m[0][1] * m2.m[1][0] + m1.m[0][2] * m2.m[2][0] + m1.m[0][3] * m2.m[3][0];
+	result.m[0][1] = m1.m[0][0] * m2.m[0][1] + m1.m[0][1] * m2.m[1][1] + m1.m[0][2] * m2.m[2][1] + m1.m[0][3] * m2.m[3][1];
+	result.m[0][2] = m1.m[0][0] * m2.m[0][2] + m1.m[0][1] * m2.m[1][2] + m1.m[0][2] * m2.m[2][2] + m1.m[0][3] * m2.m[3][2];
+	result.m[0][3] = m1.m[0][0] * m2.m[0][3] + m1.m[0][1] * m2.m[1][3] + m1.m[0][2] * m2.m[2][3] + m1.m[0][3] * m2.m[3][3];
+	result.m[1][0] = m1.m[1][0] * m2.m[0][0] + m1.m[1][1] * m2.m[1][0] + m1.m[1][2] * m2.m[2][0] + m1.m[1][3] * m2.m[3][0];
+	result.m[1][1] = m1.m[1][0] * m2.m[0][1] + m1.m[1][1] * m2.m[1][1] + m1.m[1][2] * m2.m[2][1] + m1.m[1][3] * m2.m[3][1];
+	result.m[1][2] = m1.m[1][0] * m2.m[0][2] + m1.m[1][1] * m2.m[1][2] + m1.m[1][2] * m2.m[2][2] + m1.m[1][3] * m2.m[3][2];
+	result.m[1][3] = m1.m[1][0] * m2.m[0][3] + m1.m[1][1] * m2.m[1][3] + m1.m[1][2] * m2.m[2][3] + m1.m[1][3] * m2.m[3][3];
+	result.m[2][0] = m1.m[2][0] * m2.m[0][0] + m1.m[2][1] * m2.m[1][0] + m1.m[2][2] * m2.m[2][0] + m1.m[2][3] * m2.m[3][0];
+	result.m[2][1] = m1.m[2][0] * m2.m[0][1] + m1.m[2][1] * m2.m[1][1] + m1.m[2][2] * m2.m[2][1] + m1.m[2][3] * m2.m[3][1];
+	result.m[2][2] = m1.m[2][0] * m2.m[0][2] + m1.m[2][1] * m2.m[1][2] + m1.m[2][2] * m2.m[2][2] + m1.m[2][3] * m2.m[3][2];
+	result.m[2][3] = m1.m[2][0] * m2.m[0][3] + m1.m[2][1] * m2.m[1][3] + m1.m[2][2] * m2.m[2][3] + m1.m[2][3] * m2.m[3][3];
+	result.m[3][0] = m1.m[3][0] * m2.m[0][0] + m1.m[3][1] * m2.m[1][0] + m1.m[3][2] * m2.m[2][0] + m1.m[3][3] * m2.m[3][0];
+	result.m[3][1] = m1.m[3][0] * m2.m[0][1] + m1.m[3][1] * m2.m[1][1] + m1.m[3][2] * m2.m[2][1] + m1.m[3][3] * m2.m[3][1];
+	result.m[3][2] = m1.m[3][0] * m2.m[0][2] + m1.m[3][1] * m2.m[1][2] + m1.m[3][2] * m2.m[2][2] + m1.m[3][3] * m2.m[3][2];
+	result.m[3][3] = m1.m[3][0] * m2.m[0][3] + m1.m[3][1] * m2.m[1][3] + m1.m[3][2] * m2.m[2][3] + m1.m[3][3] * m2.m[3][3];*/
 	return result;
 }
-
 Matrix4x4 MyMath::MakeTranslateMatrix(const Vector3 translate) {
 	Matrix4x4 result{};
 
@@ -155,7 +162,6 @@ Matrix4x4 MyMath::MakeTranslateMatrix(const Vector3 translate) {
 
 	return result;
 }
-
 Matrix4x4 MyMath::MakeScaleMatrix(const Vector3 scale) {
 	Matrix4x4 result{};
 
@@ -171,7 +177,6 @@ Matrix4x4 MyMath::MakeScaleMatrix(const Vector3 scale) {
 
 	return result;
 }
-
 Matrix4x4 MyMath::MakeRotateXMatrix(float radian) {
 	Matrix4x4 result{ };
 
@@ -185,7 +190,6 @@ Matrix4x4 MyMath::MakeRotateXMatrix(float radian) {
 
 	return result;
 }
-
 Matrix4x4 MyMath::MakeRotateYMatrix(float radian) {
 	Matrix4x4 result{ };
 
@@ -199,7 +203,6 @@ Matrix4x4 MyMath::MakeRotateYMatrix(float radian) {
 
 	return result;
 }
-
 Matrix4x4 MyMath::MakeRotateZMatrix(float radian) {
 	Matrix4x4 result{ };
 
@@ -213,12 +216,10 @@ Matrix4x4 MyMath::MakeRotateZMatrix(float radian) {
 
 	return result;
 }
-
 Matrix4x4 MyMath::MakeAffineMatrix(const Vector3 scale, const Vector3 rotate, const Vector3 translate) {
 	Matrix4x4 result{};
 
 	/*Matrix4x4 translateMatrix = MakeTranslateMatrix(translate);
-
 	Matrix4x4 scaleMatrix = MakeScaleMatrix(scale);*/
 	Matrix4x4 rotateXYZMatrix = Multiply(
 		MakeRotateXMatrix(rotate.x),
@@ -248,7 +249,6 @@ Matrix4x4 MyMath::MakeAffineMatrix(const Vector3 scale, const Vector3 rotate, co
 
 	return result;
 }
-
 Matrix4x4 MyMath::MakePerspectiveFovMatrix(float fovY, float aspectRetio, float nearClip, float farClip) {
 	Matrix4x4 result{};
 
@@ -266,7 +266,6 @@ Matrix4x4 MyMath::MakePerspectiveFovMatrix(float fovY, float aspectRetio, float 
 
 	return result;
 }
-
 Matrix4x4 MyMath::MakeOrthographicMatrix(float left, float top, float right, float bottom, float nearClip, float farClip) {
 	Matrix4x4 result{};
 	for (int i = 0; i < 4; i++) {
@@ -288,7 +287,6 @@ Matrix4x4 MyMath::MakeOrthographicMatrix(float left, float top, float right, flo
 
 	return result;
 }
-
 Matrix4x4 MyMath::MakeViewPortMatrix(float left, float top, float width, float height, float minDepth, float maxDepth) {
 	Matrix4x4 result{};
 	for (int i = 0; i < 4; i++) {
@@ -306,7 +304,6 @@ Matrix4x4 MyMath::MakeViewPortMatrix(float left, float top, float width, float h
 
 	return result;
 }
-
 Matrix4x4 MyMath::Inverse(const Matrix4x4& m) {
 	float a =
 		m.m[0][0] * m.m[1][1] * m.m[2][2] * m.m[3][3]
@@ -513,7 +510,6 @@ Matrix4x4 MyMath::Inverse(const Matrix4x4& m) {
 
 	return result;
 }
-
 Matrix4x4 MyMath::Transpose(const Matrix4x4& m) {
 	Matrix4x4 result{};
 
@@ -523,9 +519,19 @@ Matrix4x4 MyMath::Transpose(const Matrix4x4& m) {
 		}
 	}
 
+	//result.m[0][0] = m.m[0][0];
+	//result.m[0][1] = m.m[1][0];
+	//result.m[0][2] = m.m[2][0];
+	//result.m[0][3] = m.m[3][0];
+
+	//result.m[1][0] = m.m[0][1];
+	//result.m[1][1] = m.m[1][1];
+	//result.m[1][2] = m.m[2][1];
+	//result.m[1][3] = m.m[3][1];
+
+
 	return result;
 }
-
 Matrix4x4 MyMath::MakeIdentity4x4() {
 	Matrix4x4 result{};
 
@@ -543,6 +549,7 @@ Matrix4x4 MyMath::MakeIdentity4x4() {
 }
 
 
+
 bool MyMath::IsCollision(const Sphere& s1, const Sphere& s2) {
 	float distance = Length(Subtract(s2.center, s1.center));
 
@@ -553,7 +560,6 @@ bool MyMath::IsCollision(const Sphere& s1, const Sphere& s2) {
 	return false;
 
 }
-
 bool MyMath::IsCollision(const Sphere& s1, const Plane& plane) {
 	float k = std::abs(Dot(plane.normal, s1.center) - plane.distance);
 
@@ -562,7 +568,6 @@ bool MyMath::IsCollision(const Sphere& s1, const Plane& plane) {
 	}
 	return false;
 }
-
 bool MyMath::IsCollision(const Segment& line, const Plane& plane) {
 	float dot = Dot(plane.normal, line.diff);
 
@@ -578,7 +583,6 @@ bool MyMath::IsCollision(const Segment& line, const Plane& plane) {
 	}
 	return false;
 }
-
 bool MyMath::IsCollision(const Ray& line, const Plane& plane) {
 	float dot = Dot(plane.normal, line.diff);
 
@@ -594,7 +598,6 @@ bool MyMath::IsCollision(const Ray& line, const Plane& plane) {
 	}
 	return false;
 }
-
 bool MyMath::IsCollision(const Line& line, const Plane& plane) {
 	float dot = Dot(plane.normal, line.diff);
 
@@ -608,7 +611,6 @@ bool MyMath::IsCollision(const Line& line, const Plane& plane) {
 
 	return true;
 }
-
 bool MyMath::IsCollision(const Triangle& triangle, const Segment& segment) {
 	Plane plane{};
 	plane.normal =
@@ -653,8 +655,6 @@ bool MyMath::IsCollision(const Triangle& triangle, const Segment& segment) {
 		}
 
 	}
-
-
 
 	return false;
 
