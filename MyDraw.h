@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "struct.h"
+#include "Struct.h"
 #include <cmath>
 
 /// <summary>

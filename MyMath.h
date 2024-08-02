@@ -1,5 +1,6 @@
 ﻿#pragma once
-#include "struct.h"
+
+#include "Struct.h"
 
 /// <summary>
 /// 数学の関数系
@@ -206,6 +207,22 @@ public:
 	static Matrix4x4 MakeIdentity4x4();
 
 	/// <summary>
+	/// より大きい値を返す
+	/// </summary>
+	/// <param name="a"></param>
+	/// <param name="b"></param>
+	/// <returns></returns>
+	static float Mymax(float a, float b);
+
+	/// <summary>
+	/// より小さい値を返す
+	/// </summary>
+	/// <param name="a"></param>
+	/// <param name="b"></param>
+	/// <returns></returns>
+	static float Mymin(float a, float b);
+
+	/// <summary>
 	/// 球と球の当たり判定
 	/// </summary>
 	/// <param name="s1">球1</param>
@@ -220,6 +237,16 @@ public:
 	/// <param name="plane">平面</param>
 	/// <returns></returns>
 	static bool IsCollision(const Sphere& s1, const Plane& plane);
+
+	/// <summary>
+	/// 線と平面
+	/// </summary>
+	/// <param name="plane"></param>
+	/// <param name="segment"></param>
+	/// <param name="line"></param>
+	/// <param name="ray"></param>
+	/// <returns></returns>
+	//static bool IsCollision(const Plane& plane, Segment* segment = nullptr, Line* line = nullptr, Ray* ray = nullptr);
 
 	/// <summary>
 	/// 線分と平面の当たり判定
@@ -269,5 +296,31 @@ public:
 	/// <param name="sphere">球</param>
 	/// <returns></returns>
 	static bool IsCollision(const AABB& aabb, const Sphere& sphere);
+
+
+	/// <summary>
+	///  AABBと線分の当たり判定
+	/// </summary>
+	/// <param name="aabb">AABB</param>
+	/// <param name="segment">線分</param>
+	/// <returns></returns>
+	static bool IsCollision(const AABB& aabb, const Segment& segment);
+
+	/// <summary>
+	///  AABBと直線の当たり判定
+	/// </summary>
+	/// <param name="aabb">AABB</param>
+	/// <param name="line">直線</param>
+	/// <returns></returns>
+	static bool IsCollision(const AABB& aabb, const Line& line);
+
+	/// <summary>
+	///  AABBと半直線の当たり判定
+	/// </summary>
+	/// <param name="aabb">AABB</param>
+	/// <param name="ray">半直線</param>
+	/// <returns></returns>
+	static bool IsCollision(const AABB& aabb, const Ray& ray);
+
 
 };
