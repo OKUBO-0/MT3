@@ -1,3 +1,4 @@
+
 #include <Novice.h>
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -63,6 +64,14 @@ Vec3 MultiplyVec3(float scaler, const Vec3& v) {
 	result.x = v.x * scaler;
 	result.y = v.y * scaler;
 	result.z = v.z * scaler;
+	return result;
+}
+
+Vec3 MultiplyV(const Vec3& v0, const Vec3& v1) {
+	Vec3 result;
+	result.x = v0.x * v1.x;
+	result.y = v0.y * v1.y;
+	result.z = v0.z * v1.z;
 	return result;
 }
 
@@ -550,6 +559,50 @@ void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, con
 	}
 }
 
+void DrawAddSphere(const float radius, const Matrix4x4 worldMatrix, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
+	const uint32_t kSubDivision = 12;
+	const float kLonEvery = (2.0f * float(M_PI)) / float(kSubDivision);
+	const float kLatEvery = float(M_PI) / float(kSubDivision);
+
+	for (uint32_t latIndex = 0; latIndex < kSubDivision; ++latIndex) {
+		float lat = float(M_PI) / 2.0f + kLatEvery * latIndex; //緯度
+
+		for (uint32_t lonIndex = 0; lonIndex < kSubDivision; ++lonIndex) {
+			float lon = lonIndex * kLonEvery; //経度
+
+			Vec3 kLocalVerticse[3] = {
+				{radius * std::cos(lat) * std::cos(lon), radius * std::sin(lat), radius * std::cos(lat) * std::sin(lon)},
+				{radius * std::cos(lat + kLatEvery) * std::cos(lon), radius * std::sin(lat + kLatEvery), radius * std::cos(lat + kLatEvery) * std::sin(lon)},
+				{radius * std::cos(lat) * std::cos(lon + kLonEvery), radius * std::sin(lat), radius * std::cos(lat) * std::sin(lon + kLonEvery)}
+			};
+
+			Matrix4x4 camaraMatrix = MakeAffineMatrix({ 1.0f, 1.0f, 1.0f }, camaraRotate, camaraTranslate);
+			Matrix4x4 viewMatrix = Inverse(camaraMatrix);
+			Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, viewProjectionMatrix));
+
+			Vec3 screenVertices[3];
+			for (int i = 0; i < 3; ++i) {
+				Vec3 ndcVertex = Transform(kLocalVerticse[i], worldViewProjectionMatrix);
+				screenVertices[i] = Transform(ndcVertex, viewportMatrix);
+			}
+
+			//a,b
+			Novice::DrawLine(
+				int(screenVertices[0].x), int(screenVertices[0].y),
+				int(screenVertices[1].x), int(screenVertices[1].y),
+				color
+			);
+
+			//a, c
+			Novice::DrawLine(
+				int(screenVertices[0].x), int(screenVertices[0].y),
+				int(screenVertices[2].x), int(screenVertices[2].y),
+				color
+			);
+		}
+	}
+}
+
 //
 Vec3 Perpendicular(const Vec3& vector) {
 	if (vector.x != 0.0f || vector.y != 0.0f) {
@@ -632,13 +685,13 @@ void DrawLine(const Segment& segment, const Matrix4x4& viewProjectionMatrix, con
 		{Add(segment.origin, segment.diff)}
 	};
 
+	Matrix4x4 worldMatrix = MakeAffineMatrix({ 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f });
+	Matrix4x4 camaraMatrix = MakeAffineMatrix({ 1.0f, 1.0f, 1.0f }, camaraRotate, camaraTranslate);
+	Matrix4x4 viewMatrix = Inverse(camaraMatrix);
+	Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, viewProjectionMatrix));
+
 	Vec3 screenVertices[2];
 	for (int i = 0; i < 2; ++i) {
-		Matrix4x4 worldMatrix = MakeAffineMatrix({ 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, kLocalVerticse[i]);
-		Matrix4x4 camaraMatrix = MakeAffineMatrix({ 1.0f, 1.0f, 1.0f }, camaraRotate, camaraTranslate);
-		Matrix4x4 viewMatrix = Inverse(camaraMatrix);
-		Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, viewProjectionMatrix));
-
 		Vec3 ndcVertex = Transform(kLocalVerticse[i], worldViewProjectionMatrix);
 		screenVertices[i] = Transform(ndcVertex, viewportMatrix);
 	}
@@ -922,6 +975,8 @@ void DrawBezier(const Vec3& controlPoint0, const Vec3& controlPoint1, const Vec3
 	}
 }
 
+
+
 const char kWindowTitle[] = "LE2C_06_オオクボ_タク";
 
 // Windowsアプリでのエントリーポイント(main関数)
@@ -933,13 +988,25 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, 1280.0f / 720.0f, 0.1f, 100.0f);
 	Matrix4x4 viewportMatrix = MakeViewportMatrix(0, 0, 1280.0f, 720.0f, 0.0f, 1.0f);
 
-	Vec3 controlPoint[3] = {
-		{-0.8f, 0.58f, 1.0f},
-		{1.76f, 1.0f, -0.3f},
-		{0.94f, -0.7f, 2.3f}
+	Vec3 translates[3] = {
+		{0.2f, 1.0f, 0.0f},
+		{0.4f, 0.0f, 0.0f},
+		{0.3f, 0.0f, 0.0f}
 	};
 
-	unsigned int color = WHITE;
+	Vec3 rotates[3] = {
+		{0.0f, 0.0f, -6.8f},
+		{0.0f, 0.0f, -1.4f},
+		{0.0f, 0.0f, 0.0f}
+	};
+
+	Vec3 scales[3] = {
+		{1.0f, 1.0f, 1.0f},
+		{1.0f, 1.0f, 1.0f},
+		{1.0f, 1.0f, 1.0f}
+	};
+
+	/*unsigned int color = WHITE;*/
 
 	// キー入力結果を受け取る箱
 	char keys[256] = { 0 };
@@ -958,11 +1025,21 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓更新処理ここから
 		///
 
+		Matrix4x4 sWM = MakeAffineMatrix(scales[0], rotates[0], translates[0]);
+		Matrix4x4 eWM = Multiply(MakeAffineMatrix(scales[1], rotates[1], translates[1]), sWM);
+		Matrix4x4 hWM = Multiply(MakeAffineMatrix(scales[2], rotates[2], translates[2]), eWM);
+
 		ImGui::DragFloat3("CamaraTranslate", &camaraTranslate.x, 0.01f);
 		ImGui::DragFloat3("CamaraRotate", &camaraRotate.x, 0.01f);
-		ImGui::DragFloat3("p0", &controlPoint[0].x, 0.01f);
-		ImGui::DragFloat3("p1", &controlPoint[1].x, 0.01f);
-		ImGui::DragFloat3("p2", &controlPoint[2].x, 0.01f);
+		ImGui::DragFloat3("p0T", &translates[0].x, 0.01f);
+		ImGui::DragFloat3("p0R", &rotates[0].x, 0.01f);
+		ImGui::DragFloat3("p0S", &scales[0].x, 0.01f);
+		ImGui::DragFloat3("p1T", &translates[1].x, 0.01f);
+		ImGui::DragFloat3("p1R", &rotates[1].x, 0.01f);
+		ImGui::DragFloat3("p1S", &scales[1].x, 0.01f);
+		ImGui::DragFloat3("p2T", &translates[2].x, 0.01f);
+		ImGui::DragFloat3("p2R", &rotates[2].x, 0.01f);
+		ImGui::DragFloat3("p2S", &scales[2].x, 0.01f);
 
 		///
 		/// ↑更新処理ここまで
@@ -973,11 +1050,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		DrawGrid(projectionMatrix, viewportMatrix);
 
-		DrawBezier(controlPoint[0], controlPoint[1], controlPoint[2], projectionMatrix, viewportMatrix, color);
-		DrawSphere({ controlPoint[0], 0.01f }, projectionMatrix, viewportMatrix, BLACK);
-		DrawSphere({ controlPoint[1], 0.01f }, projectionMatrix, viewportMatrix, BLACK);
-		DrawSphere({ controlPoint[2], 0.01f }, projectionMatrix, viewportMatrix, BLACK);
+		DrawAddSphere(0.1f, sWM, projectionMatrix, viewportMatrix, RED);
+		DrawAddSphere(0.1f, eWM, projectionMatrix, viewportMatrix, GREEN);
+		DrawAddSphere(0.1f, hWM, projectionMatrix, viewportMatrix, BLUE);
 
+		DrawLine({ {sWM.m[3][0],sWM.m[3][1],sWM.m[3][2]}, {eWM.m[3][0] - sWM.m[3][0],eWM.m[3][1] - sWM.m[3][1],eWM.m[3][2] - sWM.m[3][2]} }, projectionMatrix, viewportMatrix, WHITE);
+		DrawLine({ {eWM.m[3][0],eWM.m[3][1],eWM.m[3][2]}, {hWM.m[3][0] - eWM.m[3][0],hWM.m[3][1] - eWM.m[3][1],hWM.m[3][2] - eWM.m[3][2]} }, projectionMatrix, viewportMatrix, WHITE);
 		///
 		/// ↑描画処理ここまで
 		///
