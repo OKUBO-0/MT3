@@ -5,11 +5,19 @@
 #include <assert.h>
 #include <imgui.h>
 #include <algorithm>
+#include <Vector3.h>
 
 struct Vec3 {
 	float x;
 	float y;
 	float z;
+
+	Vec3(float x = 0, float y = 0, float z = 0) : x(x), y(y), z(z) {}
+	// 複合代入演算子の宣言
+	Vec3& operator*=(float s);
+	Vec3& operator-=(const Vec3& v);
+	Vec3& operator+=(const Vec3& v);
+	Vec3& operator/=(float s);
 };
 
 struct Matrix4x4 {
@@ -40,6 +48,22 @@ struct AABB {
 	Vec3 max;
 };
 
+struct Spring {
+	Vec3 anchor;
+	float naturalLength;
+	float stiffness;
+	float dampingCoefficient;
+};
+
+struct Ball {
+	Vec3 pos;
+	Vec3 velo;
+	Vec3 acceleration;
+	float mass;
+	float radius;
+	unsigned int color;
+};
+
 //加算
 Vec3 Add(const Vec3& v1, const Vec3& v2) {
 	Vec3 result;
@@ -67,14 +91,6 @@ Vec3 MultiplyVec3(float scaler, const Vec3& v) {
 	return result;
 }
 
-Vec3 MultiplyV(const Vec3& v0, const Vec3& v1) {
-	Vec3 result;
-	result.x = v0.x * v1.x;
-	result.y = v0.y * v1.y;
-	result.z = v0.z * v1.z;
-	return result;
-}
-
 float Dot(const Vec3& v1, const Vec3& v2) {
 	float result;
 	result = v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
@@ -93,6 +109,32 @@ Matrix4x4 MakeIdentity4x4() {
 			else {
 				result.m[i][j] = 0.0f;
 			}
+		}
+	}
+
+	return result;
+}
+
+//行列の加算
+Matrix4x4 AddM(const Matrix4x4& matrix1, const Matrix4x4& matrix2) {
+	Matrix4x4 result;
+
+	for (int i = 0; i < 4; ++i) {
+		for (int j = 0; j < 4; ++j) {
+			result.m[i][j] = matrix1.m[i][j] + matrix2.m[i][j];
+		}
+	}
+
+	return result;
+}
+
+//行列の減算
+Matrix4x4 SubtractM(const Matrix4x4& matrix1, const Matrix4x4& matrix2) {
+	Matrix4x4 result;
+
+	for (int i = 0; i < 4; ++i) {
+		for (int j = 0; j < 4; ++j) {
+			result.m[i][j] = matrix1.m[i][j] - matrix2.m[i][j];
 		}
 	}
 
@@ -559,50 +601,6 @@ void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, con
 	}
 }
 
-void DrawAddSphere(const float radius, const Matrix4x4 worldMatrix, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
-	const uint32_t kSubDivision = 12;
-	const float kLonEvery = (2.0f * float(M_PI)) / float(kSubDivision);
-	const float kLatEvery = float(M_PI) / float(kSubDivision);
-
-	for (uint32_t latIndex = 0; latIndex < kSubDivision; ++latIndex) {
-		float lat = float(M_PI) / 2.0f + kLatEvery * latIndex; //緯度
-
-		for (uint32_t lonIndex = 0; lonIndex < kSubDivision; ++lonIndex) {
-			float lon = lonIndex * kLonEvery; //経度
-
-			Vec3 kLocalVerticse[3] = {
-				{radius * std::cos(lat) * std::cos(lon), radius * std::sin(lat), radius * std::cos(lat) * std::sin(lon)},
-				{radius * std::cos(lat + kLatEvery) * std::cos(lon), radius * std::sin(lat + kLatEvery), radius * std::cos(lat + kLatEvery) * std::sin(lon)},
-				{radius * std::cos(lat) * std::cos(lon + kLonEvery), radius * std::sin(lat), radius * std::cos(lat) * std::sin(lon + kLonEvery)}
-			};
-
-			Matrix4x4 camaraMatrix = MakeAffineMatrix({ 1.0f, 1.0f, 1.0f }, camaraRotate, camaraTranslate);
-			Matrix4x4 viewMatrix = Inverse(camaraMatrix);
-			Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, viewProjectionMatrix));
-
-			Vec3 screenVertices[3];
-			for (int i = 0; i < 3; ++i) {
-				Vec3 ndcVertex = Transform(kLocalVerticse[i], worldViewProjectionMatrix);
-				screenVertices[i] = Transform(ndcVertex, viewportMatrix);
-			}
-
-			//a,b
-			Novice::DrawLine(
-				int(screenVertices[0].x), int(screenVertices[0].y),
-				int(screenVertices[1].x), int(screenVertices[1].y),
-				color
-			);
-
-			//a, c
-			Novice::DrawLine(
-				int(screenVertices[0].x), int(screenVertices[0].y),
-				int(screenVertices[2].x), int(screenVertices[2].y),
-				color
-			);
-		}
-	}
-}
-
 //
 Vec3 Perpendicular(const Vec3& vector) {
 	if (vector.x != 0.0f || vector.y != 0.0f) {
@@ -685,13 +683,13 @@ void DrawLine(const Segment& segment, const Matrix4x4& viewProjectionMatrix, con
 		{Add(segment.origin, segment.diff)}
 	};
 
-	Matrix4x4 worldMatrix = MakeAffineMatrix({ 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f });
-	Matrix4x4 camaraMatrix = MakeAffineMatrix({ 1.0f, 1.0f, 1.0f }, camaraRotate, camaraTranslate);
-	Matrix4x4 viewMatrix = Inverse(camaraMatrix);
-	Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, viewProjectionMatrix));
-
 	Vec3 screenVertices[2];
 	for (int i = 0; i < 2; ++i) {
+		Matrix4x4 worldMatrix = MakeAffineMatrix({ 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, kLocalVerticse[i]);
+		Matrix4x4 camaraMatrix = MakeAffineMatrix({ 1.0f, 1.0f, 1.0f }, camaraRotate, camaraTranslate);
+		Matrix4x4 viewMatrix = Inverse(camaraMatrix);
+		Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, viewProjectionMatrix));
+
 		Vec3 ndcVertex = Transform(kLocalVerticse[i], worldViewProjectionMatrix);
 		screenVertices[i] = Transform(ndcVertex, viewportMatrix);
 	}
@@ -975,6 +973,26 @@ void DrawBezier(const Vec3& controlPoint0, const Vec3& controlPoint1, const Vec3
 	}
 }
 
+//二項演算子
+Vec3 operator+(const Vec3& v1, const Vec3& v2) { return Add(v1, v2); }
+Vec3 operator-(const Vec3& v1, const Vec3& v2) { return Subtract(v1, v2); }
+Vec3 operator*(float s, const Vec3& v) { return MultiplyVec3(s, v); }
+Vec3 operator*(const Vec3& v, float s) { return s * v; }
+Vec3 operator/(const Vec3& v, float s) { return MultiplyVec3(1.0f / s, v); }
+Matrix4x4 operator+(const Matrix4x4& m1, const Matrix4x4& m2) { return AddM(m1, m2); }
+Matrix4x4 operator-(const Matrix4x4& m1, const Matrix4x4& m2) { return SubtractM(m1, m2); }
+Matrix4x4 operator*(const Matrix4x4& m1, const Matrix4x4& m2) { return Multiply(m1, m2); }
+
+//単項演算子
+Vec3 operator-(const Vec3& v) { return { -v.x, -v.y, -v.z }; }
+Vec3 operator+(const Vec3& v) { return v; }
+
+//複合代入演算子
+Vec3& Vec3::operator*=(float s) { x *= s; y *= s; z *= s; return *this; }
+Vec3& Vec3::operator-=(const Vec3& v) { x -= v.x; y -= v.y; z -= v.z; return *this; }
+Vec3& Vec3::operator+=(const Vec3& v) { x += v.x; y += v.y; z += v.z; return *this; }
+Vec3& Vec3::operator/=(float s) { x /= s; y /= s; z /= s; return *this; }
+
 
 
 const char kWindowTitle[] = "LE2C_06_オオクボ_タク";
@@ -988,25 +1006,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, 1280.0f / 720.0f, 0.1f, 100.0f);
 	Matrix4x4 viewportMatrix = MakeViewportMatrix(0, 0, 1280.0f, 720.0f, 0.0f, 1.0f);
 
-	Vec3 translates[3] = {
-		{0.2f, 1.0f, 0.0f},
-		{0.4f, 0.0f, 0.0f},
-		{0.3f, 0.0f, 0.0f}
-	};
-
-	Vec3 rotates[3] = {
-		{0.0f, 0.0f, -6.8f},
-		{0.0f, 0.0f, -1.4f},
-		{0.0f, 0.0f, 0.0f}
-	};
-
-	Vec3 scales[3] = {
-		{1.0f, 1.0f, 1.0f},
-		{1.0f, 1.0f, 1.0f},
-		{1.0f, 1.0f, 1.0f}
-	};
-
-	/*unsigned int color = WHITE;*/
+	Vec3 a{ 0.2f, 1.0f, 0.0f };
+	Vec3 b{ 2.4f, 3.1f, 1.2f };
+	Vec3 c = a + b;
+	Vec3 d = a - b;
+	Vec3 e = a * 2.4f;
+	Vec3 rotate{ 0.4f, 1.43f, -0.8f };
+	Matrix4x4 rotateXMatrix = MakeRotateXMatrix(rotate.x);
+	Matrix4x4 rotateYMatrix = MakeRotateYMatrix(rotate.y);
+	Matrix4x4 rotateZMatrix = MakeRotateZMatrix(rotate.z);
+	Matrix4x4 rotateMatrix = rotateXMatrix * rotateYMatrix * rotateZMatrix;
 
 	// キー入力結果を受け取る箱
 	char keys[256] = { 0 };
@@ -1025,21 +1034,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓更新処理ここから
 		///
 
-		Matrix4x4 sWM = MakeAffineMatrix(scales[0], rotates[0], translates[0]);
-		Matrix4x4 eWM = Multiply(MakeAffineMatrix(scales[1], rotates[1], translates[1]), sWM);
-		Matrix4x4 hWM = Multiply(MakeAffineMatrix(scales[2], rotates[2], translates[2]), eWM);
-
-		ImGui::DragFloat3("CamaraTranslate", &camaraTranslate.x, 0.01f);
-		ImGui::DragFloat3("CamaraRotate", &camaraRotate.x, 0.01f);
-		ImGui::DragFloat3("p0T", &translates[0].x, 0.01f);
-		ImGui::DragFloat3("p0R", &rotates[0].x, 0.01f);
-		ImGui::DragFloat3("p0S", &scales[0].x, 0.01f);
-		ImGui::DragFloat3("p1T", &translates[1].x, 0.01f);
-		ImGui::DragFloat3("p1R", &rotates[1].x, 0.01f);
-		ImGui::DragFloat3("p1S", &scales[1].x, 0.01f);
-		ImGui::DragFloat3("p2T", &translates[2].x, 0.01f);
-		ImGui::DragFloat3("p2R", &rotates[2].x, 0.01f);
-		ImGui::DragFloat3("p2S", &scales[2].x, 0.01f);
+		ImGui::Begin("Window");
+		ImGui::Text("c:%f, %f, %f", c.x, c.y, c.z);
+		ImGui::Text("d:%f, %f, %f", d.x, d.y, d.z);
+		ImGui::Text("e:%f, %f, %f", e.x, e.y, e.z);
+		ImGui::Text("matrix:\n%f, %f, %f, %f\n%f, %f, %f, %f\n%f, %f, %f, %f\n%f, %f, %f, %f\n",
+			rotateMatrix.m[0][0], rotateMatrix.m[0][1], rotateMatrix.m[0][2], rotateMatrix.m[0][3],
+			rotateMatrix.m[1][0], rotateMatrix.m[1][1], rotateMatrix.m[1][2], rotateMatrix.m[1][3],
+			rotateMatrix.m[2][0], rotateMatrix.m[2][1], rotateMatrix.m[2][2], rotateMatrix.m[2][3],
+			rotateMatrix.m[3][0], rotateMatrix.m[3][1], rotateMatrix.m[3][2], rotateMatrix.m[3][3]);
+		ImGui::End();
 
 		///
 		/// ↑更新処理ここまで
@@ -1050,12 +1054,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		DrawGrid(projectionMatrix, viewportMatrix);
 
-		DrawAddSphere(0.1f, sWM, projectionMatrix, viewportMatrix, RED);
-		DrawAddSphere(0.1f, eWM, projectionMatrix, viewportMatrix, GREEN);
-		DrawAddSphere(0.1f, hWM, projectionMatrix, viewportMatrix, BLUE);
-
-		DrawLine({ {sWM.m[3][0],sWM.m[3][1],sWM.m[3][2]}, {eWM.m[3][0] - sWM.m[3][0],eWM.m[3][1] - sWM.m[3][1],eWM.m[3][2] - sWM.m[3][2]} }, projectionMatrix, viewportMatrix, WHITE);
-		DrawLine({ {eWM.m[3][0],eWM.m[3][1],eWM.m[3][2]}, {hWM.m[3][0] - eWM.m[3][0],hWM.m[3][1] - eWM.m[3][1],hWM.m[3][2] - eWM.m[3][2]} }, projectionMatrix, viewportMatrix, WHITE);
 		///
 		/// ↑描画処理ここまで
 		///
